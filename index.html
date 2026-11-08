@@ -976,7 +976,7 @@ const MASTER_FIELDS=['name','id','site','position','basic','payBy','rateDay','ra
 
 function curMonth(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
 const DEFAULT_DASH_ORDER=['panel-sites','panel-ot','panel-siteTable','panel-status'];
-function defaultState(){return{settings:{theme:'dark',month:curMonth(),company:'Daker Staffing Co.'},
+function defaultState(){return{settings:{theme:'dark',month:'2026-10',company:'Daker Staffing Co.'},
   ui:{flagsOpen:true,resCols:['flag','status','id','name','site','basic','worked','otH','otPay','abs','absDed','pen','advD','net'],pageSize:25,barTop:10,
       dashOrder:DEFAULT_DASH_ORDER.slice(),inspector:{x:null,y:null,w:340,h:null,mini:false},fill:'#7c3aed',text:'#ffffff',taskFilter:'open'},
   master:[],sheets:[],mappings:{},highlights:{},templates:[],activity:[],seeded:false,masterFile:'',
@@ -993,7 +993,10 @@ function defaultState(){return{settings:{theme:'dark',month:curMonth(),company:'
     {id:'cli-sondos',name:'Sondos',branch:'Sondos Branch',company:'Client group Sondos',billingRate:49,billingUnit:'hour',color:'#2dd4ee',notes:'Sondos site — salary sheet: Aug 2026'},
     {id:'cli-wmc',name:'WM Cusine',branch:'WM Cusine Branch',company:'Client group WM Cusine',billingRate:50,billingUnit:'hour',color:'#fbbf24',notes:'WM Cusine — salary sheet: Aug-Sep 2026'},
     {id:'cli-prg',name:'PRG+SICE',branch:'PRG+SICE Branch',company:'Client group PRG+SICE',billingRate:48,billingUnit:'hour',color:'#a78bfa',notes:'PRG+SICE — salary sheet: Aug 2026'}
-  ],tasks:[],accepted:{},lastRefresh:0,dateEngine:{}};
+  ],
+  templates:[
+    {id:'tpl-salary',name:'Salary Sheet — Per-Day',title:'Salary Sheet — Per-Day Calculation',cols:['id','name','site','basic','workedD','perDay','otH','otD','otPay'],totals:true,sig:true,status:true}
+  ],tasks:[],accepted:{},lastRefresh:0,dateEngine:{}}};
 let S=defaultState();
 const RT={tab:'dashboard',q:'',site:'all',flagged:false,sortKey:'sev',sortDir:'desc',page:1,empQ:'',empSite:'all',
   gSite:null,gBrush:'inspect',gFilter:'all',gSel:new Set(),painting:false,tplId:null,charts:{},mapQueue:[],mapCur:null,issues:[],undo:null,
@@ -1296,7 +1299,8 @@ const COLS=[
  {k:'revenue',label:'Client Revenue (SAR)',num:true},
  {k:'margin',label:'Margin (SAR)',num:true},
  {k:'remarks',label:'Remarks'},
- {k:'hl',label:'Grid Highlights'}
+ {k:'hl',label:'Grid Highlights'},
+ {k:'perDay',label:'Basic / Day (SAR)',num:true}
 ];
 const MONEY_COLS=new Set(['basic','otPay','absDed','pen','advD','totDed','net','revenue','margin']);
 function workedStr(r){const h=fnum(r.workedH,r.workedH%1?1:0),d=fnum(r.workedD,r.workedD%1?1:0);
@@ -1306,7 +1310,7 @@ function colRaw(r,k){switch(k){case 'flag':return r.flags.map(f=>f.short).join('
   case 'worked':return workedStr(r);case 'hl':return hlStr(r);case 'otH':return Math.round(r.otH*10)/10;case 'otD':return Math.round(r.otD*10)/10;
   case 'clients':return r.clientCount||1;case 'revenue':case 'margin':return Math.round((r[k]||0)*100)/100;
   case 'specId':return r.specId||'—';case 'remarks':return r.remarks||'—';case 'matchMethod':return r.matchMethod||'—';
-  case 'basic':case 'otPay':case 'absDed':case 'pen':case 'advD':case 'totDed':case 'net':return Math.round(r[k]*100)/100;default:return r[k];}}
+  case 'basic':case 'otPay':case 'absDed':case 'pen':case 'advD':case 'totDed':case 'net':return Math.round(r[k]*100)/100;case 'perDay':return Math.round((r.basic / r.rates.dim)*100)/100;default:return r[k];}}
 function colSortVal(r,k){switch(k){case 'flag':case 'status':return r.sev;case 'worked':return r.workedH;case 'hl':return r.hl.r*100+r.hl.y;
   case 'name':case 'id':case 'site':case 'position':case 'specId':case 'remarks':case 'matchMethod':return String(colRaw(r,k)).toLowerCase();default:return +r[k]||0;}}
 function colDisplay(r,k){const v=colRaw(r,k);if(MONEY_COLS.has(k))return fnum(v);return typeof v==='number'?fnum(v):esc(v);}
